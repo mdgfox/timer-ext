@@ -1,0 +1,81 @@
+body {
+  background: #0b2a6a;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: sans-serif;
+}
+
+.app {
+  width: 300px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.circle {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.progress-ring circle {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.ring-bg {
+  stroke: #1d3f91;
+}
+
+.ring {
+  stroke: #00aaff;
+  stroke-dasharray: 628; /* 2πr (r=100) */
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.time {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  font-size: 3.5rem;
+  color: #00aaff;
+}
+
+.play-btn {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+}
+
+.modes {
+  display: flex;
+  gap: 10px;
+}
+
+.modes button {
+  background: #122e75;
+  border: none;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4) inset;
+}
+.modes button:hover {
+  background: #1f46b0;
+}

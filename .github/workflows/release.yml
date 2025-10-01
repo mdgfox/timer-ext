@@ -1,0 +1,102 @@
+name: Release workflow
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    # Skip workflow if the last commit author is Automation User
+    if: github.event.head_commit.author.name != 'Automation User'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ["latest"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Configure git
+        run: |
+          git config user.name 'Automation User'
+          git config user.email '<>'
+
+      - name: Patch package.json version
+        id: version-patch
+        run: |
+          npm version patch --no-git-tag-version
+          result=$(npx dot-json@1 package.json version)
+          echo "version=${result}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Patch manifest.json version
+        run: |
+          npx dot-json@1 ./public/manifest.json version "${{ steps.version-patch.outputs.version }}"
+
+      - name: Commit version changes
+        run: |
+          git add package.json public/manifest.json
+          git commit -m "chore: bump version to ${{ steps.version-patch.outputs.version }}"
+          git push origin HEAD
+          git push --tags
+        shell: bash
+
+      - name: Install dependencies
+        run: npm ci || echo "No dependencies to install"
+
+      - name: Create dist folder
+        run: mkdir -p dist
+
+      - name: Copy src files to dist
+        run: |
+          cp src/index.html dist/
+          cp src/styles.css dist/
+          cp src/timer.js dist/
+
+      - name: Copy public files to dist
+        run: |
+          cp -r public/icons dist/icons
+          cp public/manifest.json dist/
+
+      - name: List dist content
+        run: ls -R dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-v${{ steps.version-patch.outputs.version }}
+          path: dist/
+
+      - name: Archive build
+        uses: thedoctor0/zip-release@0.7.5
+        with:
+          type: 'zip'
+          path: ./dist
+          filename: release-v${{ steps.version-patch.outputs.version }}.zip
+          exclusions: '.git* node_modules/* .editorconfig'
+
+      - name: Create GitHub release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version-patch.outputs.version }}
+          release_name: Release v${{ steps.version-patch.outputs.version }}
+
+      - name: Upload GitHub release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./release-v${{ steps.version-patch.outputs.version }}.zip
+          asset_name: game-ext-v${{ steps.version-patch.outputs.version }}.zip
+          asset_content_type: application/zip

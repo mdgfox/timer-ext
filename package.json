@@ -1,0 +1,10 @@
+{
+  "name": "timer-ext",
+  "version": "0.0.1",
+  "description": "A lightweight web-based countdown timer",
+  "main": "index.html",
+  "keywords": [],
+  "author": "mdgfox",
+  "repository": "mdgfox/timer-ext",
+  "license": "MIT"
+}
