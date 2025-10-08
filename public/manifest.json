@@ -1,7 +1,7 @@
 {
     "name": "Timer KVRM",
     "description": "A lightweight web-based countdown timer",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "manifest_version": 3,
     "background": {},
     "permissions": [
@@ -17,8 +17,7 @@
             ]
         }
     ],
-    "web_accessible_resources": [
-    ],
+    "web_accessible_resources": [],
     "action": {
         "default_popup": "index.html",
         "default_icon": {
