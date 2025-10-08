@@ -80,6 +80,8 @@ function stopTimer() {
 function startTimer() {
     if (waitingForResume) {
         waitingForResume = false;
+        beepSound.currentTime = 0;
+        beepSound.play();
         runTimer();
         return;
     }
@@ -139,7 +141,6 @@ function phaseFinished() {
         currentPhase++;
         playButton.textContent = "▶";
         playButton.classList.remove("running");
-        console.log("Пауза — ждем нажатия Play для следующей фазы...");
         return;
     }
 
@@ -213,7 +214,6 @@ function displayTempText(message, cssClass, durationMs = 3000) {
 playButton.addEventListener("click", () => {
     const activeMode = document.querySelector(".mode.active");
     if (!activeMode) {
-        console.log("Режим не выбран!");
         return;
     }
     mode = activeMode.dataset.mode;
