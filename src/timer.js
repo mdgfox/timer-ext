@@ -14,7 +14,6 @@ const phaseStops = {
 
 const radius = 150;
 const circumference = 2 * Math.PI * radius;
-ring.style.strokeDasharray = circumference;
 
 const display = document.getElementById("display");
 const ring = document.querySelector(".ring");
@@ -22,6 +21,7 @@ const playButton = document.getElementById("play");
 const beepSound = document.getElementById("beep");
 const finalText = document.getElementById("final-phase-text");
 
+ring.style.strokeDasharray = circumference;
 ring.style.strokeDashoffset = 0;
 
 function startFinalPhase() {

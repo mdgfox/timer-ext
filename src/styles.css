@@ -1,4 +1,6 @@
 body {
+	width: 375px;
+    min-height: 500px;
 	background: radial-gradient(circle at 50% 40%, #363753, #1F2030);
 	display: flex;
 	align-items: center;
