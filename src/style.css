@@ -1,81 +1,221 @@
 body {
-  background: #0b2a6a;
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: sans-serif;
+	background: radial-gradient(circle at 50% 40%, #363753, #1F2030);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	margin: 0;
+	font-family: "Segoe UI", sans-serif;
+	color: #fff;
 }
 
 .app {
-  width: 300px;
-  height: 500px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+	display: flex;
+	flex-direction: column;
 }
 
-.circle {
-  position: relative;
-  width: 220px;
-  height: 220px;
+.marker {
+	stroke-linecap: round;
+	transition: opacity 0.4s ease;
 }
 
-.progress-ring circle {
-  fill: none;
-  stroke-linecap: round;
+.marker.visible {
+	opacity: 1;
+}
+
+.timer-container {
+	position: relative;
+	width: 300px;
+	height: 300px;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+.progress-ring {
+	stroke: #ff1c3c;
+	stroke-width: 10;
+	fill: none;
+	stroke-linecap: butt;
+	transform: rotate(-90deg);
+	transform-origin: 50% 50%;
+	transition: stroke-dashoffset 0.3s linear;
 }
 
 .ring-bg {
-  stroke: #1d3f91;
+	stroke: #00f;
+	fill: none;
+	stroke-width: 10;
+	stroke-dasharray: 942;
+	stroke-dashoffset: 0;
 }
 
 .ring {
-  stroke: #00aaff;
-  stroke-dasharray: 628; /* 2πr (r=100) */
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear;
+	stroke: #FFA500;
+	fill: none;
+	stroke-width: 10;
+	stroke-dasharray: 942;
+	stroke-dashoffset: 0;
+	transition: stroke-dashoffset 1s linear;
 }
 
 .time {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%);
-  font-size: 3.5rem;
-  color: #00aaff;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -100%);
+	font-size: 64px;
+	color: white;
+	z-index: 2;
+}
+
+.controls {
+	position: absolute;
+	bottom: 60px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 10px;
 }
 
 .play-btn {
-  position: absolute;
-  top: 60%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: white;
-  cursor: pointer;
+	width: 40px;
+	height: 40px;
+	border: none;
+	border-radius: 50%;
+	background-color: white;
+	content: "▶";
+	font-size: 20px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.play-btn.running {
+	content: "◼";
+}
+
+.play-btn.paused {
+	content: "▶";
 }
 
 .modes {
-  display: flex;
-  gap: 10px;
+	display: flex;
+	justify-content: center;
+	gap: 25px;
+	margin-top: 40px;
 }
 
-.modes button {
-  background: #122e75;
-  border: none;
-  border-radius: 50%;
-  width: 70px;
-  height: 70px;
-  color: white;
-  font-size: 0.8rem;
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(0,0,0,0.4) inset;
+.mode {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	cursor: pointer;
+	transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
-.modes button:hover {
-  background: #1f46b0;
+
+.mode:hover {
+	transform: scale(1.05);
+}
+
+.ring-mark {
+	position: relative;
+	width: 80px;
+	height: 80px;
+	background: radial-gradient(circle at 40% 35%, #0e2f70, #091e56);
+	border-radius: 50%;
+	box-shadow: 0 0 25px rgba(0, 0, 0, 0.4) inset, 0 0 10px #102a74;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ring-mark::before,
+.ring-mark::after,
+.ring-mark .extra-tick {
+	position: absolute;
+	content: "";
+	width: 4px;
+	height: 16px;
+	background: #FFA500;
+	box-shadow: 0 0 10px #FFA500;
+	border-radius: 6px;
+	transform-origin: center center;
+}
+
+.ring-mark.one::before {
+	top: -8px;
+}
+
+.ring-mark.one::after {
+	display: none;
+}
+
+.ring-mark.two::before {
+	top: -8px;
+}
+
+.ring-mark.two::after {
+	bottom: -8px;
+}
+
+.ring-mark.three::before {
+	top: -8px;
+}
+
+.ring-mark.three .extra-tick {
+	transform: rotate(60deg);
+	left: 8px;
+	bottom: 0px;
+}
+
+.ring-mark.three::after {
+	transform: rotate(120deg);
+	right: 8px;
+	bottom: 0px;
+}
+
+.label {
+	color: white;
+	font-size: 0.85rem;
+	letter-spacing: 1px;
+	text-align: center;
+	margin-top: 12px;
+	text-transform: uppercase;
+}
+
+.mode-indicator {
+	width: 16px;
+	height: 16px;
+	background-color: #5CD2C6;
+	border-radius: 50%;
+	opacity: 0;
+	box-shadow: 0 0 15px 5px rgba(92, 210, 198, 0.4);
+	transition: opacity 0.3s ease-in-out;
+}
+
+.mode.active .mode-indicator {
+	opacity: 1;
+}
+
+#timer-value.final-phase {
+	color: #FFA500;
+	transition: color 0.3s ease;
+}
+
+#final-phase-text {
+	font-size: 17px;
+	color: #FFA500;
+	text-align: center;
+	margin-top: -150px;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+}
+
+#final-phase-text.visible {
+	opacity: 1;
+}
+
+.hidden {
+	display: none;
 }
