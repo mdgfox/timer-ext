@@ -118,6 +118,8 @@ function runTimer() {
 
         if (mode === "standard" && remaining === 10) {
             displayTempText("Осталось 10 секунд!");
+            beepSound.currentTime = 0;
+            beepSound.play();
         }
 
         const progress = (60 - remaining) / 60;
