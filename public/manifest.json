@@ -3,21 +3,7 @@
     "description": "A lightweight web-based countdown timer",
     "version": "0.0.3",
     "manifest_version": 3,
-    "background": {},
-    "permissions": [
-        "scripting"
-    ],
-    "content_scripts": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "js": [
-                "index.js"
-            ]
-        }
-    ],
-    "web_accessible_resources": [],
+    "permissions": [],
     "action": {
         "default_popup": "index.html",
         "default_icon": {
