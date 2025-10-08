@@ -20,6 +20,7 @@ const ring = document.querySelector(".ring");
 const playButton = document.getElementById("play");
 const beepSound = document.getElementById("beep");
 const finalText = document.getElementById("final-phase-text");
+const modesContainer = document.getElementById("modes-container");
 
 ring.style.strokeDasharray = circumference;
 ring.style.strokeDashoffset = 0;
@@ -148,36 +149,6 @@ function phaseFinished() {
     }
 }
 
-playButton.addEventListener("click", () => {
-    const activeMode = document.querySelector(".mode.active");
-    if (!activeMode) {
-        console.log("Режим не выбран!");
-        return;
-    }
-    mode = activeMode.dataset.mode;
-
-    if (waitingForResume) {
-        startTimer();
-        return;
-    }
-
-    if (intervalId !== null) {
-        stopTimer();
-
-        remaining = 60;
-        currentPhase = 0;
-        isFinalPhase = false;
-
-        updateDisplay();
-        setProgress(0);
-        finalText.classList.remove("visible");
-
-        return;
-    }
-
-    startTimer();
-});
-
 function updateMarkers(mode) {
     document
         .querySelectorAll(".marker")
@@ -238,5 +209,43 @@ function displayTempText(message, cssClass, durationMs = 3000) {
         }, TRANSITION_TIME);
     }, durationMs);
 }
+
+playButton.addEventListener("click", () => {
+    const activeMode = document.querySelector(".mode.active");
+    if (!activeMode) {
+        console.log("Режим не выбран!");
+        return;
+    }
+    mode = activeMode.dataset.mode;
+
+    if (waitingForResume) {
+        startTimer();
+        return;
+    }
+
+    if (intervalId !== null) {
+        stopTimer();
+
+        remaining = 60;
+        currentPhase = 0;
+        isFinalPhase = false;
+
+        updateDisplay();
+        setProgress(0);
+        finalText.classList.remove("visible");
+
+        return;
+    }
+
+    startTimer();
+});
+
+modesContainer.addEventListener("click", (e) => {
+    const modeElement = e.target.closest(".mode");
+
+    if (modeElement) {
+        selectMode(modeElement);
+    }
+});
 
 updateMarkers(mode);
