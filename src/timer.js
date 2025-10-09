@@ -1,19 +1,23 @@
+const TIMER_CONFIG = {
+    DURATION: 60,
+    FINAL_PHASE_DURATION: 10,
+    PHASE_STOPS: {
+        standard: [],
+        duplet: [30],
+        blitz: [40, 20],
+    },
+    RADIUS: 150,
+};
+
 let intervalId = null;
-let remaining = 60;
+let finalPhaseTimer = null;
+let remaining = TIMER_CONFIG.DURATION;
 let currentPhase = 0;
 let waitingForResume = false;
 let mode = "standard";
 let isFinalPhase = false;
-let finalPhaseTimer = null;
 
-const phaseStops = {
-    standard: [],
-    duplet: [30],
-    blitz: [40, 20],
-};
-
-const radius = 150;
-const circumference = 2 * Math.PI * radius;
+const CIRCUMFERENCE = 2 * Math.PI * TIMER_CONFIG.RADIUS;
 
 const display = document.getElementById("display");
 const ring = document.querySelector(".ring");
@@ -22,94 +26,104 @@ const beepSound = document.getElementById("beep");
 const finalText = document.getElementById("final-phase-text");
 const modesContainer = document.getElementById("modes-container");
 
-ring.style.strokeDasharray = circumference;
+ring.style.strokeDasharray = CIRCUMFERENCE;
 ring.style.strokeDashoffset = 0;
 
-function startFinalPhase() {
+function startFinalPhaseCountdown() {
     isFinalPhase = true;
-    remaining = 10;
-    display.textContent = remaining;
+    remaining = TIMER_CONFIG.FINAL_PHASE_DURATION;
+    updateDisplay();
     display.classList.add("final-phase");
     finalText.classList.add("visible");
 
     finalPhaseTimer = setInterval(() => {
         remaining--;
-        display.textContent = remaining;
+        updateDisplay();
 
-        const progress = (60 - remaining) / 60;
+        const progress =
+            (TIMER_CONFIG.DURATION - remaining) / TIMER_CONFIG.DURATION;
         setProgress(progress);
 
         if (remaining <= 0) {
             clearInterval(finalPhaseTimer);
-            endFinalPhase();
+            handleFinalPhaseEnd();
         }
     }, 1000);
 }
 
-function endFinalPhase() {
+function handleFinalPhaseEnd() {
     display.classList.remove("final-phase");
     finalText.classList.remove("visible");
 
     beepSound.play();
     isFinalPhase = false;
 
-    remaining = 60;
-    currentPhase = 0;
-    waitingForResume = false;
-
-    updateDisplay();
-    setProgress(0);
+    resetTimerState();
 }
 
 function setProgress(percent) {
-    const offset = percent * circumference;
+    const offset = percent * CIRCUMFERENCE;
     ring.style.strokeDashoffset = offset;
 }
 
 function updateDisplay() {
-    display.textContent = remaining;
+    setDisplayText(remaining);
 }
 
-function stopTimer() {
+function setDisplayText(text) {
+    display.textContent = text;
+}
+
+function setRingProgress(percent) {
+    const offset = percent * CIRCUMFERENCE;
+    ring.style.strokeDashoffset = offset;
+}
+
+function setPlayButtonState(isRunning) {
+    playButton.textContent = isRunning ? "◼" : "▶";
+    playButton.classList.toggle("running", isRunning);
+}
+
+function setFinalPhaseVisibility(isVisible) {
+    finalText.classList.toggle("visible", isVisible);
+    display.classList.toggle("final-phase", isVisible);
+}
+
+function stopTimerInterval() {
     if (intervalId) clearInterval(intervalId);
     intervalId = null;
     playButton.textContent = "▶";
     playButton.classList.remove("running");
 }
 
-function startTimer() {
+function handleStartButton() {
     if (waitingForResume) {
         waitingForResume = false;
         beepSound.currentTime = 0;
         beepSound.play();
-        runTimer();
+        runTimerInterval();
         return;
     }
 
-    stopTimer();
-    remaining = 60;
-    currentPhase = 0;
-    waitingForResume = false;
-    isFinalPhase = false;
-
+    stopTimerInterval();
+    resetTimerState();
     beepSound.currentTime = 0;
     beepSound.play();
 
-    displayTempText("Время!");
+    showTemporaryText("Время!");
 
-    runTimer();
+    runTimerInterval();
 }
 
-function runTimer() {
-    stopTimer();
+function runTimerInterval() {
+    stopTimerInterval();
     updateDisplay();
 
     playButton.textContent = "◼";
     playButton.classList.add("running");
 
-    const stops = phaseStops[mode];
+    const stops = TIMER_CONFIG.PHASE_STOPS[mode];
     const nextStop = stops[currentPhase] || 0;
-    const phaseStart = remaining;
     const phaseEnd = nextStop;
 
     intervalId = setInterval(() => {
@@ -117,26 +131,27 @@ function runTimer() {
         updateDisplay();
 
         if (mode === "standard" && remaining === 10) {
-            displayTempText("Осталось 10 секунд!");
+            showTemporaryText("Осталось 10 секунд!");
             beepSound.currentTime = 0;
             beepSound.play();
         }
 
-        const progress = (60 - remaining) / 60;
+        const progress =
+            (TIMER_CONFIG.DURATION - remaining) / TIMER_CONFIG.DURATION;
         setProgress(progress);
 
         if (!isFinalPhase && remaining <= phaseEnd) {
             clearInterval(intervalId);
-            phaseFinished();
+            handlePhaseEnd();
         }
     }, 1000);
 }
 
-function phaseFinished() {
+function handlePhaseEnd() {
     beepSound.currentTime = 0;
     beepSound.play();
 
-    const stops = phaseStops[mode];
+    const stops = TIMER_CONFIG.PHASE_STOPS[mode];
 
     if (currentPhase < stops.length) {
         waitingForResume = true;
@@ -147,7 +162,7 @@ function phaseFinished() {
     }
 
     if (!isFinalPhase) {
-        startFinalPhase();
+        startFinalPhaseCountdown();
         return;
     }
 }
@@ -177,17 +192,7 @@ function selectMode(el) {
 
     mode = el.dataset.mode;
     updateMarkers(mode);
-
-    stopTimer();
-    remaining = 60;
-    currentPhase = 0;
-    waitingForResume = false;
-    isFinalPhase = false;
-
-    updateDisplay();
-    setProgress(0);
-
-    finalText.classList.remove("visible");
+    resetTimerState();
 }
 
 function displayTempText(message, cssClass, durationMs = 3000) {
@@ -213,6 +218,21 @@ function displayTempText(message, cssClass, durationMs = 3000) {
     }, durationMs);
 }
 
+function showTemporaryText(message, cssClass, durationMs = 3000) {
+    displayTempText(message, cssClass, durationMs);
+}
+
+function resetTimerState() {
+    remaining = TIMER_CONFIG.DURATION;
+    currentPhase = 0;
+    waitingForResume = false;
+    isFinalPhase = false;
+    updateDisplay();
+    setProgress(0);
+    finalText.classList.remove("visible");
+    display.classList.remove("final-phase");
+}
+
 playButton.addEventListener("click", () => {
     const activeMode = document.querySelector(".mode.active");
     if (!activeMode) {
@@ -221,25 +241,17 @@ playButton.addEventListener("click", () => {
     mode = activeMode.dataset.mode;
 
     if (waitingForResume) {
-        startTimer();
+        handleStartButton();
         return;
     }
 
     if (intervalId !== null) {
-        stopTimer();
-
-        remaining = 60;
-        currentPhase = 0;
-        isFinalPhase = false;
-
-        updateDisplay();
-        setProgress(0);
-        finalText.classList.remove("visible");
-
+        stopTimerInterval();
+        resetTimerState();
         return;
     }
 
-    startTimer();
+    handleStartButton();
 });
 
 modesContainer.addEventListener("click", (e) => {
