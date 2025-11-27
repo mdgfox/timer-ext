@@ -1,7 +1,7 @@
 {
     "name": "Таймер КВРМ",
     "description": "Простой таймер для КВРМ.",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "manifest_version": 3,
     "permissions": [],
     "action": {
