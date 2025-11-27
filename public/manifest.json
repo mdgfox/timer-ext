@@ -1,6 +1,6 @@
 {
-    "name": "Timer KVRM",
-    "description": "A lightweight web-based countdown timer",
+    "name": "Таймер КВРМ",
+    "description": "Простой таймер для КВРМ.",
     "version": "0.0.9",
     "manifest_version": 3,
     "permissions": [],
