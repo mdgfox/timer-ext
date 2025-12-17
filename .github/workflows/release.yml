@@ -65,7 +65,9 @@ jobs:
 
       - name: Copy public files to dist
         run: |
-          cp -r public/icons dist/icons
+          mkdir -p dist/public
+          cp -r public/icons dist/public/
+          cp -r public/fonts dist/public/
           cp public/manifest.json dist/
 
       - name: List dist content
