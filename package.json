@@ -1,6 +1,6 @@
 {
   "name": "timer-ext",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A lightweight web-based countdown timer",
   "main": "index.html",
   "keywords": [],
