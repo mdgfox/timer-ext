@@ -5,17 +5,33 @@ const CONFIG = {
     RADIUS: 150,
 };
 
+const MODE_KEYS = {
+    Digit1: "standard",
+    Numpad1: "standard",
+    Digit2: "duplet",
+    Numpad2: "duplet",
+    Digit3: "blitz",
+    Numpad3: "blitz",
+};
+
 const CIRCUMFERENCE = 2 * Math.PI * CONFIG.RADIUS;
 const ring = document.getElementById("progress-ring");
 const recordRing = document.getElementById("record-ring");
 const display = document.getElementById("display");
 const statusText = document.getElementById("status-text");
 const playBtn = document.getElementById("play");
-const beep = document.getElementById("beep");
+const phaseLabel = document.getElementById("phase-label");
+const modesContainer = document.getElementById("modes-container");
+
+const sounds = {
+    start: document.getElementById("sound-start"),
+    next: document.getElementById("sound-next"),
+    warning: document.getElementById("sound-warning"),
+    record: document.getElementById("sound-record"),
+};
 
 const icons = {
     play: document.getElementById("icon-play"),
-    pause: document.getElementById("icon-pause"),
     stop: document.getElementById("icon-stop"),
 };
 
@@ -32,17 +48,34 @@ recordRing.style.strokeDasharray = CIRCUMFERENCE;
 function setIcon(name) {
     Object.values(icons).forEach((icon) => (icon.style.display = "none"));
     icons[name].style.display = "block";
+
+    const label =
+        name === "stop"
+            ? "Остановить и сбросить"
+            : isAutoPaused
+              ? `Начать вопрос ${phaseIndex + 1}`
+              : "Старт";
+    playBtn.setAttribute("aria-label", label);
+    playBtn.title = `${label} (Пробел)`;
 }
 
-function playSignal() {
-    beep.currentTime = 0;
-    beep.play().catch((e) => console.log("Audio play failed:", e));
+function setModesLocked(locked) {
+    modesContainer.classList.toggle("locked", locked);
+    modesContainer.setAttribute("aria-disabled", locked);
+    modesContainer.title = locked ? "Остановите таймер, чтобы сменить режим" : "";
 }
 
-function showStatus(text, type = "") {
+function playSignal(name) {
+    const sound = sounds[name];
+    sound.currentTime = 0;
+    sound.play().catch((e) => console.log("Audio play failed:", e));
+}
+
+function showStatus(text, type = "", sticky = false) {
     clearTimeout(statusTimeout);
     statusText.textContent = text;
     statusText.className = "status-text visible " + type;
+    if (sticky) return;
 
     statusTimeout = setTimeout(() => {
         statusText.classList.remove("visible");
@@ -52,6 +85,18 @@ function showStatus(text, type = "") {
 function updateUI() {
     const phases = CONFIG[currentMode];
     const isFinalPhase = phaseIndex === phases.length - 1;
+    const isWarning =
+        !isFinalPhase &&
+        currentMode === "standard" &&
+        remaining <= 10 &&
+        remaining >= 0;
+
+    if (isFinalPhase) phaseLabel.textContent = "Запись ответа";
+    else if (isWarning) phaseLabel.textContent = "Последние секунды";
+    else if (currentMode === "standard") phaseLabel.textContent = "Вопрос";
+    else
+        phaseLabel.textContent = `Вопрос ${phaseIndex + 1} из ${phases.length - 1}`;
+    display.classList.toggle("paused", isAutoPaused);
 
     let displayTime;
     if (!isFinalPhase && currentMode === "duplet") {
@@ -78,7 +123,7 @@ function updateUI() {
         ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - percent);
         recordRing.style.strokeDashoffset = CIRCUMFERENCE;
 
-        if (currentMode === "standard" && remaining <= 10 && remaining > 0) {
+        if (isWarning) {
             display.classList.add("warning");
         } else {
             if (remaining > 10) display.classList.remove("warning", "final");
@@ -90,12 +135,13 @@ function stopTimerForPause() {
     intervalId = null;
     isAutoPaused = true;
     setIcon("play");
+    setModesLocked(false);
 }
 
 function nextPhase() {
-    playSignal();
     phaseIndex++;
     const phases = CONFIG[currentMode];
+    playSignal(phaseIndex === phases.length - 1 ? "record" : "next");
 
     if (phaseIndex >= phases.length) {
         resetApp();
@@ -118,14 +164,17 @@ function nextPhase() {
     const isBlitzPause =
         currentMode === "blitz" && (phaseIndex === 1 || phaseIndex === 2);
 
-    if (isDupletPause || isBlitzPause) stopTimerForPause();
+    if (isDupletPause || isBlitzPause) {
+        stopTimerForPause();
+        showStatus("Пауза — нажмите кнопку", "pause", true);
+    }
     updateUI();
 }
 
 function tick() {
     remaining--;
     if (currentMode === "standard" && phaseIndex === 0 && remaining === 10) {
-        playSignal();
+        playSignal("warning");
         showStatus("Осталось 10 секунд", "warning");
     }
 
@@ -137,16 +186,20 @@ function tick() {
 }
 
 function startActiveTimer() {
-    playSignal();
+    playSignal("start");
     if (
         phaseIndex === 0 &&
         remaining === CONFIG[currentMode][0] &&
         !isAutoPaused
     ) {
         if (currentMode !== "standard") showStatus("Вопрос 1");
+    } else if (isAutoPaused) {
+        showStatus(`Вопрос ${phaseIndex + 1}`);
     }
     isAutoPaused = false;
+    display.classList.remove("paused");
     setIcon("stop");
+    setModesLocked(true);
     intervalId = setInterval(tick, 1000);
 }
 
@@ -165,6 +218,7 @@ function resetApp() {
     remaining = phases[0];
 
     setIcon("play");
+    setModesLocked(false);
 
     display.classList.remove("final", "warning");
     statusText.classList.remove("visible", "final", "warning");
@@ -179,15 +233,59 @@ function resetApp() {
     }, 50);
 }
 
-document.getElementById("modes-container").addEventListener("click", (e) => {
-    const btn = e.target.closest(".mode");
-    if (!btn || intervalId) return;
-    document
-        .querySelectorAll(".mode")
-        .forEach((m) => m.classList.remove("active"));
-    btn.classList.add("active");
+function selectMode(btn) {
+    modesContainer.querySelectorAll(".mode").forEach((m) => {
+        const isActive = m === btn;
+        m.classList.toggle("active", isActive);
+        m.setAttribute("aria-checked", isActive);
+        m.tabIndex = isActive ? 0 : -1;
+    });
     currentMode = btn.dataset.mode;
     resetApp();
+}
+
+modesContainer.addEventListener("click", (e) => {
+    const btn = e.target.closest(".mode");
+    if (!btn || intervalId) return;
+    selectMode(btn);
+});
+
+modesContainer.addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[
+        e.key
+    ];
+    if (!step || intervalId) return;
+
+    const modes = [...modesContainer.querySelectorAll(".mode")];
+    const current = modes.indexOf(document.activeElement);
+    const next = modes[(current + step + modes.length) % modes.length];
+    e.preventDefault();
+    next.focus();
+    selectMode(next);
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+
+    if (e.code === "Space") {
+        // The focused main button handles Space natively
+        if (e.target.closest(".fab-button")) return;
+        e.preventDefault();
+        playBtn.click();
+        return;
+    }
+
+    const mode = MODE_KEYS[e.code];
+    if (mode && !intervalId) {
+        const btn = modesContainer.querySelector(`.mode[data-mode="${mode}"]`);
+        btn.focus();
+        selectMode(btn);
+    }
+});
+
+document.addEventListener("keyup", (e) => {
+    // Chrome clicks a focused button on Space keyup, which would re-select a mode
+    if (e.code === "Space" && !e.target.closest(".fab-button")) e.preventDefault();
 });
 
 resetApp();
